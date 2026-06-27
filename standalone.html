@@ -3,7 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AURA &amp; ASH — Sensory Gastronomy</title>
+    <title>AURA &amp; ASH — Duyusal Gastronomi</title>
+    <meta name="description" content="AURA &amp; ASH — Ateşin sessiz lüksü. Modern odun ateşi konsepti; duyusal menü, atmosfer seçimli rezervasyon ve canlı mutfak." />
+    <link rel="canonical" href="https://salihgunes23.github.io/aura-ash/" />
+    <meta name="theme-color" content="#0A0908" />
+
+    <!-- Social preview (Open Graph + Twitter) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AURA &amp; ASH" />
+    <meta property="og:title" content="AURA &amp; ASH — Duyusal Gastronomi" />
+    <meta property="og:description" content="Ateşin sessiz lüksü. Duyusal menü, atmosfer seçimli rezervasyon ve canlı mutfak." />
+    <meta property="og:url" content="https://salihgunes23.github.io/aura-ash/" />
+    <meta property="og:image" content="https://salihgunes23.github.io/aura-ash/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="AURA & ASH" />
+    <meta property="og:locale" content="tr_TR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AURA &amp; ASH — Duyusal Gastronomi" />
+    <meta name="twitter:description" content="Ateşin sessiz lüksü." />
+    <meta name="twitter:image" content="https://salihgunes23.github.io/aura-ash/og.png" />
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230A0908'/%3E%3Ctext x='32' y='45' font-family='Georgia,serif' font-size='36' fill='%23C9A86A' text-anchor='middle'%3E%26%3C/text%3E%3C/svg%3E" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -141,6 +162,8 @@ const { useState, useEffect, useMemo, useCallback, useContext, useRef } = React
 
 /* ── Brand atmosphere ─────────────────────────────────────────────────────── */
 const CHAMPAGNE = '#C9A86A'
+const SITE_URL = 'https://salihgunes23.github.io/aura-ash/'
+const COUNTER_URL = 'https://abacus.jasoncameron.dev/hit/auraash-salihgunes23/visits'
 
 const SALONS = [
   {
@@ -2179,8 +2202,126 @@ function SecretCellar({ open, onClose }) {
   )
 }
 
+/* ── Visitor counter — a quiet vital sign in the footer ───────────────────── */
+function VisitorCounter({ accent }) {
+  const [count, setCount] = useState(null)
+  useEffect(() => {
+    let alive = true
+    fetch(COUNTER_URL)
+      .then((r) => r.json())
+      .then((d) => {
+        if (alive && d && typeof d.value === 'number') setCount(d.value)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
+  if (count == null) return null
+  return (
+    <span className="font-mono text-[10px] uppercase tracking-wide2 text-muted">
+      <motion.span
+        key={count}
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ color: accent }}
+      >
+        {fmt(count)}
+      </motion.span>{' '}
+      ziyaret
+    </span>
+  )
+}
+
+/* ── Share sheet — QR + copy + native share ───────────────────────────────── */
+function ShareModal({ open, onClose, accent }) {
+  const [copied, setCopied] = useState(false)
+  const canNative = typeof navigator !== 'undefined' && !!navigator.share
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(SITE_URL)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch {
+      setCopied(false)
+    }
+  }
+  const native = async () => {
+    try {
+      await navigator.share({ title: 'AURA & ASH', text: 'Ateşin sessiz lüksü.', url: SITE_URL })
+    } catch {
+      /* user dismissed */
+    }
+  }
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-[75] flex items-center justify-center bg-ash-950/80 p-5 backdrop-blur-md"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.35 }}
+          onClick={onClose}
+          role="dialog"
+          aria-label="Paylaş"
+        >
+          <motion.div
+            className="relative w-full max-w-sm rounded-3xl border border-ash-800 bg-ash-900/95 p-8 text-center backdrop-blur-xl"
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={onClose}
+              aria-label="Kapat"
+              className="absolute right-5 top-5 text-muted transition-colors hover:text-linen"
+            >
+              <span className="text-2xl leading-none">×</span>
+            </button>
+
+            <p className="font-mono text-[10px] uppercase tracking-wide2 text-muted">Paylaş</p>
+            <h3 className="mt-3 font-display text-2xl font-light text-linen">
+              AURA <span style={{ color: accent }}>&amp;</span> ASH
+            </h3>
+
+            <div className="mx-auto mt-6 w-44 overflow-hidden rounded-2xl border border-ash-800 bg-linen p-3">
+              <img src="qr.png" alt="AURA & ASH QR kodu" className="h-full w-full" />
+            </div>
+
+            <p className="mt-5 break-all font-mono text-[11px] text-muted">{SITE_URL}</p>
+
+            <div className="mt-6 flex flex-col gap-2.5">
+              <button
+                onClick={copy}
+                className="w-full rounded-full py-3 text-[12px] uppercase tracking-wide2 transition-transform duration-300 hover:scale-[1.02]"
+                style={{ background: accent, color: '#0A0908' }}
+              >
+                {copied ? 'Kopyalandı ✓' : 'Linki Kopyala'}
+              </button>
+              {canNative && (
+                <button
+                  onClick={native}
+                  className="w-full rounded-full border py-3 text-[12px] uppercase tracking-wide2 text-linen transition-colors duration-300 hover:bg-linen hover:text-ash-950"
+                  style={{ borderColor: accent }}
+                >
+                  Cihazda Paylaş
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
 /* ── Footer with the hidden trigger ───────────────────────────────────────── */
-function Footer({ accent, onSecret }) {
+function Footer({ accent, onSecret, onShare }) {
   const [taps, setTaps] = useState(0)
   const handle = () => {
     const next = taps + 1
@@ -2196,22 +2337,32 @@ function Footer({ accent, onSecret }) {
         <div className="font-display text-2xl font-light tracking-hair text-linen">
           AURA <span style={{ color: accent }}>&amp;</span> ASH
         </div>
-        <div className="flex flex-wrap gap-x-8 gap-y-2 font-mono text-[10px] uppercase tracking-wide2 text-muted">
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-2 font-mono text-[10px] uppercase tracking-wide2 text-muted">
           <span>Karaköy · İstanbul</span>
           <span>18:00 — 01:00</span>
           <span>+90 212 000 00 00</span>
+          <button
+            onClick={onShare}
+            className="inline-flex items-center gap-1.5 uppercase tracking-wide2 transition-colors duration-300 hover:text-linen"
+            style={{ color: accent }}
+          >
+            Paylaş ↗
+          </button>
         </div>
       </div>
-      <div className="mt-8 font-mono text-[10px] tracking-hair text-ash-700">
-        © 2026 AURA &amp; ASH. Modern odun ateşiyle pişirilmiş bir{' '}
-        <button
-          onClick={handle}
-          className="cursor-default text-ash-700 transition-colors duration-300 hover:text-ash-700"
-          aria-label="—"
-        >
-          mahzen
-        </button>{' '}
-        deneyimi. Tüm hakları saklıdır.
+      <div className="mt-8 flex flex-col-reverse items-start justify-between gap-3 sm:flex-row sm:items-center">
+        <div className="font-mono text-[10px] tracking-hair text-ash-700">
+          © 2026 AURA &amp; ASH. Modern odun ateşiyle pişirilmiş bir{' '}
+          <button
+            onClick={handle}
+            className="cursor-default text-ash-700 transition-colors duration-300 hover:text-ash-700"
+            aria-label="—"
+          >
+            mahzen
+          </button>{' '}
+          deneyimi. Tüm hakları saklıdır.
+        </div>
+        <VisitorCounter accent={accent} />
       </div>
     </footer>
   )
@@ -2224,6 +2375,7 @@ export default function App() {
   const [salon, setSalon] = useState(null)
   const [kitchenOpen, setKitchenOpen] = useState(false)
   const [cellarOpen, setCellarOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   const accent = salon?.accent ?? CHAMPAGNE
   const glow = salon?.glow ?? 'rgba(201,168,106,0.12)'
@@ -2242,12 +2394,13 @@ export default function App() {
     const onKey = (e) => {
       if (e.key !== 'Escape') return
       if (cellarOpen) return setCellarOpen(false)
+      if (shareOpen) return setShareOpen(false)
       if (drawerDish) return setDrawerDish(null)
       if (kitchenOpen) return setKitchenOpen(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [cellarOpen, drawerDish, kitchenOpen])
+  }, [cellarOpen, shareOpen, drawerDish, kitchenOpen])
 
   const views = {
     discover: <Hero onNav={handleNav} accent={accent} />,
@@ -2275,7 +2428,7 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
 
-        <Footer accent={accent} onSecret={() => setCellarOpen(true)} />
+        <Footer accent={accent} onSecret={() => setCellarOpen(true)} onShare={() => setShareOpen(true)} />
       </main>
 
       <AnimatePresence>
@@ -2286,6 +2439,7 @@ export default function App() {
 
       <KitchenLive open={kitchenOpen} onClose={() => setKitchenOpen(false)} accent={accent} />
       <SecretCellar open={cellarOpen} onClose={() => setCellarOpen(false)} />
+      <ShareModal open={shareOpen} onClose={() => setShareOpen(false)} accent={accent} />
     </div>
     </NotificationProvider>
   )
