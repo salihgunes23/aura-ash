@@ -1,0 +1,2161 @@
+import React, { useState, useEffect, useMemo, useCallback, useContext, useRef } from 'react'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+
+/* ────────────────────────────────────────────────────────────────────────────
+   AURA & ASH — Sensory Gastronomy & Modern Wood Fire
+   A single-file, quiet-luxury restaurant interface.
+   React · Tailwind (CDN) · Framer Motion.
+   Everything — state, panels, micro-interactions — lives here, by design.
+──────────────────────────────────────────────────────────────────────────── */
+
+/* ── Brand atmosphere ─────────────────────────────────────────────────────── */
+const CHAMPAGNE = '#C9A86A'
+
+const SALONS = [
+  {
+    id: 'hearth',
+    name: 'The Hearth',
+    sub: 'Sıcak · Odun Ateşi',
+    accent: '#C56A3D',
+    glow: 'rgba(197,106,61,0.16)',
+    note: 'Ateşin merkezinde. Bakır ışık, çıtırdayan meşe, en yakın masa.',
+  },
+  {
+    id: 'greenhouse',
+    name: 'The Greenhouse',
+    sub: 'Ferah · Botanik',
+    accent: '#8FA98C',
+    glow: 'rgba(143,169,140,0.16)',
+    note: 'Cam tavan altında yeşil bir sessizlik. Gündüz ışığı, nemli toprak.',
+  },
+  {
+    id: 'void',
+    name: 'The Void',
+    sub: 'Minimalist · İzole',
+    accent: '#AEB4BC',
+    glow: 'rgba(174,180,188,0.14)',
+    note: 'Hiçbir şey. Sadece tabak, ışık ve siz. Mutlak odak.',
+  },
+]
+
+const DISHES = [
+  {
+    id: 'ember-quail',
+    name: 'Ember-Lacquered Quail',
+    tr: 'Köz Cilalı Bıldırcın',
+    price: 920,
+    technique: 'Odun Ateşi',
+    mood: 'Gurme',
+    tagline: 'Közlenmiş erik · is soğanı · kemik jüsü',
+    description:
+      'Meşe közünde yavaşça cilalanan bıldırcın; dumanı tatlıya çeviren erik lakı ve dakikalarca süzülen kemik jüsü ile. Tek lokmada ateşin hafızası.',
+    route: [
+      { place: 'Ege Yaylaları', label: 'Bıldırcın', km: 0 },
+      { place: 'Gökçeada Bahçeleri', label: 'Erik', km: 240 },
+      { place: 'Aura Mutfağı', label: 'Ateş', km: 318 },
+    ],
+    macros: { protein: 82, carb: 21, allergen: 14 },
+    track: { title: 'Lush Life', artist: 'John Coltrane', duration: 214 },
+    chefNote:
+      '"Bıldırcını közün üstüne koyduğum an Coltrane’in nefesini duyarım — ikisi de yavaş yanar."',
+  },
+  {
+    id: 'cellar-beet',
+    name: 'Cellar-Aged Beetroot',
+    tr: 'Mahzende Dinlenmiş Pancar',
+    price: 540,
+    technique: 'Füme',
+    mood: 'Romantik',
+    tagline: 'Huş füme · keçi külü · kırmızı meyve',
+    description:
+      'Kırk gün toprak altında dinlenen pancar, huş dumanında çelikleşir; keçi peyniri külü ve fermente kırmızı meyve ile bitirilir. Toprağın olgun, sakin tarafı.',
+    route: [
+      { place: 'Trakya Kili', label: 'Pancar', km: 0 },
+      { place: 'Bolu Ormanı', label: 'Huş', km: 190 },
+      { place: 'Aura Mahzeni', label: 'Dinlenme', km: 265 },
+    ],
+    macros: { protein: 26, carb: 58, allergen: 8 },
+    track: { title: 'Re:Stacks', artist: 'Bon Iver', duration: 386 },
+    chefNote:
+      '"Pancar acele sevmez. Onu beklerken bu şarkıyı koyarım — ikisi de sabırla derinleşir."',
+  },
+  {
+    id: 'sousvide-turbot',
+    name: 'Sous-vide Turbot',
+    tr: 'Sous-vide Kalkan',
+    price: 1180,
+    technique: 'Sous-vide',
+    mood: 'Gurme',
+    tagline: 'Tereyağı emülsiyon · deniz börülcesi · limon külü',
+    description:
+      'Tam 52 derecede saatlerce mühürlenen kalkan; ipeksi tereyağı emülsiyonu, deniz börülcesi ve yakılmış limon külü ile. Denizin en yumuşak hâli.',
+    route: [
+      { place: 'Saroz Körfezi', label: 'Kalkan', km: 0 },
+      { place: 'Ayvalık', label: 'Zeytinyağı', km: 95 },
+      { place: 'Aura Mutfağı', label: 'Mühürleme', km: 360 },
+    ],
+    macros: { protein: 74, carb: 9, allergen: 22 },
+    track: { title: 'Teardrop', artist: 'Massive Attack', duration: 329 },
+    chefNote:
+      '"Su sabit, kalp sabit. Bu ritim olmadan kalkanın o tek doğru anını yakalayamam."',
+  },
+  {
+    id: 'fire-leek',
+    name: 'Charred Leek & Hazelnut',
+    tr: 'Köz Pırasa & Fındık',
+    price: 460,
+    technique: 'Odun Ateşi',
+    mood: 'Enerjik',
+    tagline: 'Yanık pırasa · brown butter · Giresun fındığı',
+    description:
+      'Dış kabuğu siyaha yanmış, içi tatlanmış pırasa; kahverengi tereyağı ve kavrulmuş Giresun fındığı ile. Mütevazı sebzenin gösterişsiz zaferi.',
+    route: [
+      { place: 'Ödemiş Ovası', label: 'Pırasa', km: 0 },
+      { place: 'Giresun', label: 'Fındık', km: 720 },
+      { place: 'Aura Mutfağı', label: 'Köz', km: 800 },
+    ],
+    macros: { protein: 18, carb: 44, allergen: 31 },
+    track: { title: 'Flim', artist: 'Aphex Twin', duration: 175 },
+    chefNote:
+      '"Pırasayı çevirirken tempoyu bu tutar. Hızlı ateş, hızlı el — ama panik yok."',
+  },
+  {
+    id: 'smoked-pigeon',
+    name: 'Smoked Pigeon Royale',
+    tr: 'Füme Güvercin Royale',
+    price: 1340,
+    technique: 'Füme',
+    mood: 'Gurme',
+    tagline: 'Çam dumanı · vişne · kakao nibs',
+    description:
+      'Çam talaşı dumanında olgunlaşan güvercin göğsü; vişne redüksiyonu ve acı kakao nibs ile. Ormanın koyu, kadifemsi tarafı.',
+    route: [
+      { place: 'Konya Step', label: 'Güvercin', km: 0 },
+      { place: 'Kütahya', label: 'Vişne', km: 210 },
+      { place: 'Aura Tütsühanesi', label: 'Füme', km: 330 },
+    ],
+    macros: { protein: 88, carb: 17, allergen: 6 },
+    track: { title: 'An Ending (Ascent)', artist: 'Brian Eno', duration: 264 },
+    chefNote:
+      '"Duman yavaş çalışır, Eno da öyle. O tütsü dolabının önünde geçen sessiz dakikalar."',
+  },
+  {
+    id: 'milk-ice',
+    name: 'Burnt Milk & Ash Honey',
+    tr: 'Yanık Süt & Kül Balı',
+    price: 380,
+    technique: 'Sous-vide',
+    mood: 'Romantik',
+    tagline: 'Karamelize süt · kül balı · tuz çiçeği',
+    description:
+      'Hafifçe yakılmış süt dondurması, odun külünde olgunlaşmış bal ve tuz çiçeği. Tatlı ile is arasındaki o ince, baş döndürücü çizgi.',
+    route: [
+      { place: 'İzmir Çiftliği', label: 'Süt', km: 0 },
+      { place: 'Muğla Kovanları', label: 'Bal', km: 220 },
+      { place: 'Aura Mutfağı', label: 'Karamel', km: 470 },
+    ],
+    macros: { protein: 22, carb: 63, allergen: 19 },
+    track: { title: 'Avril 14th', artist: 'Aphex Twin', duration: 125 },
+    chefNote:
+      '"Son tabak hep en kırılgan. Bu piyano olmadan o sütü yakacak cesareti bulamam."',
+  },
+]
+
+const TECHNIQUES = ['Sous-vide', 'Füme', 'Odun Ateşi']
+const MOODS = ['Gurme', 'Romantik', 'Enerjik']
+
+const EXPERIENCES = [
+  { id: 'jazz', name: 'Canlı Caz Gecesi', detail: 'Üçlü, 21:00 sahne', price: 450 },
+  { id: 'wine', name: 'Şarap Eşleşme Menüsü', detail: '6 tabak · 6 kadeh', price: 980 },
+  { id: 'chef', name: 'Şef Masası Deneyimi', detail: 'Mutfağın kalbinde', price: 1500 },
+  { id: 'somm', name: 'Sommelier Eşliği', detail: 'Kişisel rehber', price: 620 },
+]
+
+const LIGHTING = [
+  { id: 'candle', label: 'Mum Işığı', dim: 0.62 },
+  { id: 'low', label: 'Loş', dim: 0.4 },
+  { id: 'spot', label: 'Odaklanmış Spot', dim: 0.12 },
+]
+
+const SERVICE = [
+  { id: 'alone', label: 'Bizi Yalnız Bırakın', detail: 'Görünmez servis' },
+  { id: 'story', label: 'Şef Hikâyeyi Anlatsın', detail: 'Her tabakta bir not' },
+]
+
+const CELLAR = [
+  { name: 'Château Lafite', year: 1982, region: 'Pauillac, FR', note: 'Sedir & graphite', price: 48000 },
+  { name: 'Krug Clos du Mesnil', year: 1996, region: 'Champagne, FR', note: 'Brioche & tuz', price: 36500 },
+  { name: 'Sassicaia', year: 1985, region: 'Bolgheri, IT', note: 'Böğürtlen & deri', price: 29000 },
+  { name: 'Egon Müller Scharzhof', year: 2003, region: 'Mosel, DE', note: 'Petrol & bal', price: 22000 },
+]
+
+const NAV = [
+  { id: 'discover', label: 'Keşfet' },
+  { id: 'menu', label: 'Menü' },
+  { id: 'reserve', label: 'Rezervasyon' },
+  { id: 'live', label: 'Canlı Mutfak' },
+]
+
+const fmt = (n) => new Intl.NumberFormat('tr-TR').format(n)
+const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
+
+/* ── Payment & validation helpers ─────────────────────────────────────────── */
+const onlyDigits = (s) => (s || '').replace(/\D/g, '')
+
+const cardBrand = (num) => {
+  const n = onlyDigits(num)
+  if (/^4/.test(n)) return 'VISA'
+  if (/^(5[1-5]|2[2-7])/.test(n)) return 'Mastercard'
+  if (/^3[47]/.test(n)) return 'Amex'
+  if (/^9792/.test(n)) return 'Troy'
+  return '••••'
+}
+const formatCardNumber = (s) => onlyDigits(s).slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
+const formatExpiry = (s) => {
+  const n = onlyDigits(s).slice(0, 4)
+  return n.length >= 3 ? `${n.slice(0, 2)}/${n.slice(2)}` : n
+}
+const luhnValid = (s) => {
+  const n = onlyDigits(s)
+  if (n.length < 15) return false
+  let sum = 0
+  let alt = false
+  for (let i = n.length - 1; i >= 0; i--) {
+    let d = +n[i]
+    if (alt) {
+      d *= 2
+      if (d > 9) d -= 9
+    }
+    sum += d
+    alt = !alt
+  }
+  return sum % 10 === 0
+}
+const expiryValid = (s) => {
+  const n = onlyDigits(s)
+  if (n.length !== 4) return false
+  const mm = +n.slice(0, 2)
+  return mm >= 1 && mm <= 12
+}
+const emailValid = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s || '')
+const phoneValid = (s) => onlyDigits(s).length >= 10
+const genCode = () =>
+  'AA-' +
+  Math.random().toString(36).slice(2, 5).toUpperCase() +
+  '-' +
+  Math.random().toString(36).slice(2, 5).toUpperCase()
+
+const prettyDate = (iso) => {
+  if (!iso) return '—'
+  try {
+    return new Date(iso + 'T00:00:00').toLocaleDateString('tr-TR', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+    })
+  } catch {
+    return iso
+  }
+}
+const todayISO = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/* ── Notifications (toasts) ───────────────────────────────────────────────── */
+const NotifyCtx = React.createContext(() => {})
+const useNotify = () => useContext(NotifyCtx)
+
+function NotificationProvider({ accent, children }) {
+  const [toasts, setToasts] = useState([])
+  const notify = useCallback((msg, opts = {}) => {
+    const id = Math.random().toString(36).slice(2)
+    setToasts((t) => [...t, { id, msg, tone: opts.tone || 'default' }])
+    const ttl = opts.duration || 3200
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), ttl)
+  }, [])
+  return (
+    <NotifyCtx.Provider value={notify}>
+      {children}
+      <div className="pointer-events-none fixed bottom-5 left-5 z-[80] flex flex-col gap-2.5">
+        <AnimatePresence>
+          {toasts.map((t) => (
+            <motion.div
+              key={t.id}
+              initial={{ opacity: 0, x: -24, scale: 0.96 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -24, scale: 0.96 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="pointer-events-auto flex items-center gap-3 rounded-full border border-ash-800 bg-ash-900/95 py-2.5 pl-3 pr-5 backdrop-blur-xl"
+            >
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ background: t.tone === 'success' ? '#8FA98C' : accent }}
+              />
+              <span className="text-[12px] text-linen/90">{t.msg}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </NotifyCtx.Provider>
+  )
+}
+
+/* ── Small primitives reused across the reservation flow ──────────────────── */
+function Stepper({ value, onChange, min = 1, max = 12, accent }) {
+  const btn =
+    'flex h-8 w-8 items-center justify-center rounded-full border border-ash-700 text-linen transition-colors duration-300 disabled:opacity-30'
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        type="button"
+        className={btn}
+        disabled={value <= min}
+        onClick={() => onChange(Math.max(min, value - 1))}
+        aria-label="Azalt"
+      >
+        −
+      </button>
+      <span className="w-6 text-center font-mono text-base" style={{ color: accent }}>
+        {value}
+      </span>
+      <button
+        type="button"
+        className={btn}
+        disabled={value >= max}
+        onClick={() => onChange(Math.min(max, value + 1))}
+        aria-label="Artır"
+      >
+        +
+      </button>
+    </div>
+  )
+}
+
+function Field({ label, error, children }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block font-mono text-[10px] uppercase tracking-hair text-muted">
+        {label}
+      </span>
+      {children}
+      <AnimatePresence>
+        {error && (
+          <motion.span
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-1.5 block font-mono text-[10px] text-[#C56A3D]"
+          >
+            {error}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </label>
+  )
+}
+
+const inputCls =
+  'w-full rounded-xl border border-ash-800 bg-ash-950/60 px-4 py-3 text-[14px] text-linen placeholder:text-ash-700 outline-none transition-colors duration-300 focus:border-champagne [color-scheme:dark]'
+
+/* ── Ambient ember field — the room's slow breath ─────────────────────────── */
+function AmbientField({ accent, glow }) {
+  const reduce = useReducedMotion()
+  const blobs = [
+    { size: 620, x: '8%', y: '18%', dur: 38, delay: 0 },
+    { size: 480, x: '64%', y: '60%', dur: 46, delay: 6 },
+    { size: 360, x: '40%', y: '12%', dur: 52, delay: 12 },
+  ]
+  return (
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(120% 90% at 50% 0%, #15130F 0%, #0A0908 55%, #070605 100%)',
+        }}
+      />
+      {blobs.map((b, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full blur-[120px]"
+          style={{
+            width: b.size,
+            height: b.size,
+            left: b.x,
+            top: b.y,
+            background: glow,
+            transition: 'background 1200ms ease',
+          }}
+          animate={
+            reduce
+              ? {}
+              : { x: [0, 40, -30, 0], y: [0, -36, 24, 0], opacity: [0.5, 0.8, 0.55, 0.5] }
+          }
+          transition={{ duration: b.dur, delay: b.delay, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      ))}
+      {/* fine grain — keeps the black from going flat */}
+      <div
+        className="absolute inset-0 opacity-[0.05] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
+    </div>
+  )
+}
+
+/* ── Restaurant pulse — minimalist vital sign, top-right ──────────────────── */
+function PulseIndicator({ accent }) {
+  const reduce = useReducedMotion()
+  const [kitchen, setKitchen] = useState(42)
+  const [occupancy, setOccupancy] = useState(78)
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setKitchen((k) => Math.min(96, Math.max(18, k + (Math.round(Math.random() * 6) - 3))))
+      setOccupancy((o) => Math.min(99, Math.max(40, o + (Math.round(Math.random() * 4) - 2))))
+    }, 4200)
+    return () => clearInterval(t)
+  }, [])
+
+  const state = kitchen < 50 ? 'Sakin' : kitchen < 78 ? 'Akışta' : 'Yoğun'
+
+  return (
+    <div className="fixed right-5 top-5 z-30 hidden select-none text-right sm:block">
+      <div className="flex items-center justify-end gap-2">
+        <motion.span
+          className="inline-block h-1.5 w-1.5 rounded-full"
+          style={{ background: accent }}
+          animate={reduce ? {} : { opacity: [1, 0.3, 1] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <span className="font-mono text-[10px] uppercase tracking-wide3 text-muted">
+          Restoran Nabzı
+        </span>
+      </div>
+      <div className="mt-2 font-mono text-[11px] leading-relaxed text-linen/80">
+        Mutfak Yoğunluğu&nbsp;
+        <span style={{ color: accent }}>%{kitchen}</span>
+        <span className="text-muted"> ({state})</span>
+        <span className="mx-2 text-ash-700">|</span>
+        Doluluk <span style={{ color: accent }}>%{occupancy}</span>
+      </div>
+    </div>
+  )
+}
+
+/* ── Vertical navigation — the spine ──────────────────────────────────────── */
+function VerticalNav({ active, onNav, accent }) {
+  return (
+    <nav className="fixed left-0 top-0 z-30 flex h-full w-16 flex-col items-center justify-between py-7 sm:w-20">
+      <button
+        onClick={() => onNav('discover')}
+        className="group flex flex-col items-center"
+        aria-label="AURA & ASH — ana sayfa"
+      >
+        <span className="font-display text-[15px] italic leading-none text-linen">A</span>
+        <span className="mt-0.5 font-display text-[15px] leading-none text-linen">&amp;</span>
+        <span className="font-display text-[15px] italic leading-none text-linen">A</span>
+      </button>
+
+      <ul className="flex flex-col items-center gap-7">
+        {NAV.map((item) => {
+          const on = active === item.id
+          return (
+            <li key={item.id}>
+              <button
+                onClick={() => onNav(item.id)}
+                className="group relative flex items-center"
+                aria-current={on ? 'page' : undefined}
+              >
+                <span
+                  className="text-[11px] uppercase tracking-wide2 transition-colors duration-500"
+                  style={{
+                    writingMode: 'vertical-rl',
+                    transform: 'rotate(180deg)',
+                    color: on ? accent : '#7A746B',
+                  }}
+                >
+                  {item.label}
+                </span>
+                <motion.span
+                  className="absolute -left-2 top-1/2 h-px"
+                  style={{ background: accent, translateY: '-50%' }}
+                  initial={false}
+                  animate={{ width: on ? 14 : 0, opacity: on ? 1 : 0 }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                />
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+
+      <div className="font-mono text-[9px] uppercase tracking-wide2 text-ash-700">
+        <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>EST. 2019</span>
+      </div>
+    </nav>
+  )
+}
+
+/* ── Section heading — the editorial eyebrow ──────────────────────────────── */
+function Eyebrow({ index, children, accent }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="font-mono text-[11px] tracking-wide2" style={{ color: accent }}>
+        {index}
+      </span>
+      <span className="h-px w-8" style={{ background: accent, opacity: 0.5 }} />
+      <span className="font-mono text-[11px] uppercase tracking-wide2 text-muted">{children}</span>
+    </div>
+  )
+}
+
+/* ── 1 · HERO ─────────────────────────────────────────────────────────────── */
+function Hero({ onNav, accent }) {
+  const reduce = useReducedMotion()
+  const reveal = {
+    hidden: { opacity: 0, y: 24 },
+    show: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: { duration: 1, delay: 0.15 + i * 0.12, ease: [0.22, 1, 0.36, 1] },
+    }),
+  }
+  return (
+    <section className="relative flex min-h-screen flex-col justify-center px-6 pb-24 pt-28 sm:px-12 lg:px-20">
+      <motion.div custom={0} variants={reveal} initial="hidden" animate="show">
+        <Eyebrow index="01" accent={accent}>
+          Duyusal Gastronomi · Modern Odun Ateşi
+        </Eyebrow>
+      </motion.div>
+
+      <div className="mt-10 max-w-5xl">
+        <motion.h1
+          custom={1}
+          variants={reveal}
+          initial="hidden"
+          animate="show"
+          className="font-display font-light leading-[0.92] text-linen"
+          style={{ fontSize: 'clamp(3.2rem, 11vw, 9.5rem)' }}
+        >
+          <span className="block">Ateşin</span>
+          <span className="block italic" style={{ color: accent }}>
+            sessiz
+          </span>
+          <span className="block">lüksü.</span>
+        </motion.h1>
+      </div>
+
+      <motion.p
+        custom={2}
+        variants={reveal}
+        initial="hidden"
+        animate="show"
+        className="mt-10 max-w-md text-[15px] font-light leading-relaxed text-muted"
+      >
+        Odun ateşinin ham gücünü, bir parfümün inceliğiyle tabağa taşıyoruz. Her servis,
+        duyularınız için tasarlanmış sessiz bir tören.
+      </motion.p>
+
+      <motion.div
+        custom={3}
+        variants={reveal}
+        initial="hidden"
+        animate="show"
+        className="mt-12 flex flex-wrap items-center gap-4"
+      >
+        <button
+          onClick={() => onNav('reserve')}
+          className="group relative overflow-hidden rounded-full border px-8 py-3.5 text-[12px] uppercase tracking-wide2 text-linen transition-colors duration-500"
+          style={{ borderColor: accent }}
+        >
+          <span className="relative z-10 transition-colors duration-500 group-hover:text-ash-950">
+            Masa Ayırt
+          </span>
+          <span
+            className="absolute inset-0 -z-0 origin-left scale-x-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100"
+            style={{ background: accent }}
+          />
+        </button>
+        <button
+          onClick={() => onNav('menu')}
+          className="text-[12px] uppercase tracking-wide2 text-muted underline-offset-8 transition-colors duration-300 hover:text-linen hover:underline"
+        >
+          Menüyü Keşfet →
+        </button>
+      </motion.div>
+
+      {/* slow ember dial — bottom corner, ambient not loud */}
+      <motion.div
+        custom={4}
+        variants={reveal}
+        initial="hidden"
+        animate="show"
+        className="mt-20 flex items-center gap-8 sm:absolute sm:bottom-12 sm:right-12 sm:mt-0"
+      >
+        <div className="text-right">
+          <p className="font-mono text-[10px] uppercase tracking-wide2 text-muted">Bu akşamın ateşi</p>
+          <p className="mt-1 font-display text-2xl text-linen">Meşe · Kiraz</p>
+        </div>
+        <motion.div
+          className="relative h-14 w-14"
+          animate={reduce ? {} : { rotate: 360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+        >
+          <div className="absolute inset-0 rounded-full border border-ash-700" />
+          <div
+            className="absolute left-1/2 top-0 h-2 w-px -translate-x-1/2"
+            style={{ background: accent }}
+          />
+        </motion.div>
+      </motion.div>
+    </section>
+  )
+}
+
+/* ── 2 · MENU + sensory drawer ────────────────────────────────────────────── */
+function FilterLab({ technique, mood, setTechnique, setMood, accent, count }) {
+  const Chip = ({ active, children, onClick }) => (
+    <button
+      onClick={onClick}
+      className="rounded-full border px-4 py-2 text-[11px] uppercase tracking-hair transition-all duration-[400ms]"
+      style={{
+        borderColor: active ? accent : '#272320',
+        color: active ? '#0A0908' : '#7A746B',
+        background: active ? accent : 'transparent',
+      }}
+    >
+      {children}
+    </button>
+  )
+  return (
+    <div className="mb-12 rounded-2xl border border-ash-800 bg-ash-900/40 p-5 backdrop-blur-sm">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <span className="font-mono text-[11px] uppercase tracking-wide2 text-muted">
+          Filtre Laboratuvarı
+        </span>
+        <span className="font-mono text-[11px] text-muted">
+          <span style={{ color: accent }}>{count}</span> tabak
+        </span>
+      </div>
+      <div className="mt-5 space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-2 w-28 font-mono text-[10px] uppercase tracking-hair text-ash-700">
+            Pişirme Tekniği
+          </span>
+          {TECHNIQUES.map((t) => (
+            <Chip key={t} active={technique === t} onClick={() => setTechnique(technique === t ? null : t)}>
+              {t}
+            </Chip>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-2 w-28 font-mono text-[10px] uppercase tracking-hair text-ash-700">
+            Ruh Hâli
+          </span>
+          {MOODS.map((m) => (
+            <Chip key={m} active={mood === m} onClick={() => setMood(mood === m ? null : m)}>
+              {m}
+            </Chip>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DishRow({ dish, onOpen, accent, i }) {
+  return (
+    <motion.li
+      layout
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.5, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
+      className="group border-b border-ash-800"
+    >
+      <div className="flex items-baseline gap-5 py-7">
+        <span className="hidden w-10 shrink-0 font-mono text-[11px] text-ash-700 sm:block">
+          {String(i + 1).padStart(2, '0')}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <h3 className="font-display text-2xl font-light text-linen transition-colors duration-300 sm:text-3xl">
+              {dish.name}
+            </h3>
+            <span className="font-mono text-[10px] uppercase tracking-hair text-ash-700">
+              {dish.technique} · {dish.mood}
+            </span>
+          </div>
+          <p className="mt-2 max-w-xl text-[13px] font-light text-muted opacity-70 transition-opacity duration-500 group-hover:opacity-100">
+            {dish.tagline}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-5">
+          <span className="font-mono text-sm text-linen/80">₺{fmt(dish.price)}</span>
+          <button
+            onClick={() => onOpen(dish)}
+            aria-label={`${dish.name} — duyusal analizi aç`}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-ash-800 transition-all duration-[400ms] hover:border-transparent"
+            style={{ '--h': accent }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = accent)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <DotsIcon />
+          </button>
+        </div>
+      </div>
+    </motion.li>
+  )
+}
+
+function DotsIcon() {
+  return (
+    <span className="flex gap-[3px]">
+      {[0, 1, 2].map((d) => (
+        <span key={d} className="h-1 w-1 rounded-full bg-linen" />
+      ))}
+    </span>
+  )
+}
+
+/* Equalizer for the chef's acoustics */
+function Equalizer({ playing, accent }) {
+  const reduce = useReducedMotion()
+  const bars = [0.4, 0.9, 0.6, 1, 0.5]
+  return (
+    <div className="flex h-6 items-end gap-[3px]">
+      {bars.map((h, i) => (
+        <motion.span
+          key={i}
+          className="w-[3px] rounded-full"
+          style={{ background: accent, height: `${h * 100}%` }}
+          animate={playing && !reduce ? { scaleY: [0.3, 1, 0.5, 0.9, 0.4] } : { scaleY: 0.25 }}
+          transition={{ duration: 0.9 + i * 0.12, repeat: playing ? Infinity : 0, ease: 'easeInOut' }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function MacroBar({ label, value, accent, delay }) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between">
+        <span className="font-mono text-[10px] uppercase tracking-hair text-muted">{label}</span>
+        <span className="font-mono text-[10px]" style={{ color: accent }}>
+          {value}
+        </span>
+      </div>
+      <div className="mt-2 h-px w-full bg-ash-800">
+        <motion.div
+          className="h-px"
+          style={{ background: accent }}
+          initial={{ width: 0 }}
+          animate={{ width: `${value}%` }}
+          transition={{ duration: 1.1, delay, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function SensoryDrawer({ dish, onClose, accent }) {
+  const [playing, setPlaying] = useState(false)
+  const [t, setT] = useState(0)
+
+  useEffect(() => {
+    setPlaying(false)
+    setT(0)
+  }, [dish])
+
+  useEffect(() => {
+    if (!playing || !dish) return
+    const id = setInterval(() => {
+      setT((prev) => {
+        if (prev >= dish.track.duration) {
+          setPlaying(false)
+          return 0
+        }
+        return prev + 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [playing, dish])
+
+  if (!dish) return null
+  const progress = (t / dish.track.duration) * 100
+
+  return (
+    <>
+      <motion.div
+        className="fixed inset-0 z-40 bg-ash-950/70 backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5 }}
+        onClick={onClose}
+      />
+      <motion.aside
+        className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-ash-800 bg-ash-900/95 backdrop-blur-xl"
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        role="dialog"
+        aria-label={`${dish.name} duyusal analizi`}
+      >
+        <div className="flex items-start justify-between p-7">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-wide2 text-muted">
+              Duyusal Analiz
+            </p>
+            <h2 className="mt-3 font-display text-3xl font-light leading-tight text-linen">
+              {dish.name}
+            </h2>
+            <p className="mt-1 font-display text-sm italic text-muted">{dish.tr}</p>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Paneli kapat"
+            className="mt-1 text-muted transition-colors hover:text-linen"
+          >
+            <span className="text-2xl leading-none">×</span>
+          </button>
+        </div>
+
+        <div className="px-7 pb-10">
+          <p className="text-[13px] font-light leading-relaxed text-linen/70">{dish.description}</p>
+
+          {/* Product route */}
+          <div className="mt-10">
+            <p className="font-mono text-[10px] uppercase tracking-wide2 text-muted">Ürün Rotası</p>
+            <div className="relative mt-5 pl-5">
+              <motion.span
+                className="absolute left-[3px] top-1 w-px"
+                style={{ background: accent, transformOrigin: 'top' }}
+                initial={{ scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+                aria-hidden
+              />
+              <div
+                className="absolute left-0 top-1 bottom-1 w-px bg-ash-800"
+                aria-hidden
+                style={{ height: 'calc(100% - 0.5rem)' }}
+              />
+              <ul className="space-y-6">
+                {dish.route.map((r, i) => (
+                  <motion.li
+                    key={r.place}
+                    className="relative"
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.18, duration: 0.5 }}
+                  >
+                    <span
+                      className="absolute -left-5 top-1.5 h-1.5 w-1.5 rounded-full"
+                      style={{ background: accent, boxShadow: `0 0 0 3px ${accent}22` }}
+                    />
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-[13px] text-linen">{r.place}</span>
+                      <span className="font-mono text-[10px] text-ash-700">{r.km} km</span>
+                    </div>
+                    <span className="font-mono text-[10px] uppercase tracking-hair text-muted">
+                      {r.label}
+                    </span>
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Macros */}
+          <div className="mt-10 space-y-5">
+            <p className="font-mono text-[10px] uppercase tracking-wide2 text-muted">
+              Dinamik Makro Barları
+            </p>
+            <MacroBar label="Protein" value={dish.macros.protein} accent={accent} delay={0.2} />
+            <MacroBar label="Karbonhidrat" value={dish.macros.carb} accent={accent} delay={0.32} />
+            <MacroBar label="Alerjen Yoğunluğu" value={dish.macros.allergen} accent={accent} delay={0.44} />
+          </div>
+
+          {/* Chef's acoustics */}
+          <div className="mt-10 rounded-2xl border border-ash-800 bg-ash-850/60 p-5">
+            <p className="font-mono text-[10px] uppercase tracking-wide2 text-muted">
+              Şefin Akustiği
+            </p>
+            <div className="mt-4 flex items-center gap-4">
+              <button
+                onClick={() => setPlaying((p) => !p)}
+                aria-label={playing ? 'Duraklat' : 'Çal'}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors duration-300"
+                style={{ borderColor: accent }}
+              >
+                {playing ? (
+                  <span className="flex gap-[3px]">
+                    <span className="h-3 w-[3px]" style={{ background: accent }} />
+                    <span className="h-3 w-[3px]" style={{ background: accent }} />
+                  </span>
+                ) : (
+                  <span
+                    className="ml-[2px] h-0 w-0 border-y-[6px] border-l-[9px] border-y-transparent"
+                    style={{ borderLeftColor: accent }}
+                  />
+                )}
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] text-linen">{dish.track.title}</p>
+                <p className="truncate font-mono text-[10px] text-muted">{dish.track.artist}</p>
+              </div>
+              <Equalizer playing={playing} accent={accent} />
+            </div>
+            <div className="mt-4">
+              <div className="h-px w-full bg-ash-800">
+                <div className="h-px" style={{ width: `${progress}%`, background: accent }} />
+              </div>
+              <div className="mt-2 flex justify-between font-mono text-[10px] text-ash-700">
+                <span>{mmss(t)}</span>
+                <span>{mmss(dish.track.duration)}</span>
+              </div>
+            </div>
+            <p className="mt-5 font-display text-sm italic leading-relaxed text-linen/60">
+              {dish.chefNote}
+            </p>
+          </div>
+        </div>
+      </motion.aside>
+    </>
+  )
+}
+
+function MenuSection({ accent, onOpenDrawer }) {
+  const [technique, setTechnique] = useState(null)
+  const [mood, setMood] = useState(null)
+
+  const filtered = useMemo(
+    () =>
+      DISHES.filter(
+        (d) => (!technique || d.technique === technique) && (!mood || d.mood === mood),
+      ),
+    [technique, mood],
+  )
+
+  return (
+    <section className="px-6 pb-32 pt-28 sm:px-12 lg:px-20">
+      <Eyebrow index="02" accent={accent}>
+        Menü · Duyusal Kütüphane
+      </Eyebrow>
+      <h2
+        className="mt-8 max-w-2xl font-display font-light leading-[0.95] text-linen"
+        style={{ fontSize: 'clamp(2.4rem, 6vw, 4.5rem)' }}
+      >
+        Az şey, kusursuzca.
+      </h2>
+      <p className="mt-6 max-w-md text-[14px] font-light text-muted">
+        Her tabağın yanındaki <span style={{ color: accent }}>···</span> ile malzemenin yolculuğunu,
+        makro dengesini ve şefin o anki akustiğini keşfedin.
+      </p>
+
+      <div className="mt-14">
+        <FilterLab
+          technique={technique}
+          mood={mood}
+          setTechnique={setTechnique}
+          setMood={setMood}
+          accent={accent}
+          count={filtered.length}
+        />
+
+        <ul>
+          <AnimatePresence mode="popLayout">
+            {filtered.map((d, i) => (
+              <DishRow key={d.id} dish={d} i={i} accent={accent} onOpen={onOpenDrawer} />
+            ))}
+          </AnimatePresence>
+        </ul>
+
+        {filtered.length === 0 && (
+          <div className="py-20 text-center">
+            <p className="font-display text-2xl font-light text-muted">Bu kombinasyon henüz pişmedi.</p>
+            <button
+              onClick={() => {
+                setTechnique(null)
+                setMood(null)
+              }}
+              className="mt-4 text-[12px] uppercase tracking-wide2 underline-offset-8 hover:underline"
+              style={{ color: accent }}
+            >
+              Filtreleri sıfırla
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+/* ── 3 · RESERVATION ──────────────────────────────────────────────────────── */
+function SalonCard({ salon, active, onSelect }) {
+  return (
+    <button
+      onClick={() => onSelect(salon)}
+      className="group relative overflow-hidden rounded-2xl border p-7 text-left transition-all duration-[600ms]"
+      style={{
+        borderColor: active ? salon.accent : '#272320',
+        background: active ? salon.glow : 'transparent',
+      }}
+    >
+      <div
+        className="absolute -right-10 -top-10 h-32 w-32 rounded-full blur-3xl transition-opacity duration-[600ms]"
+        style={{ background: salon.accent, opacity: active ? 0.25 : 0 }}
+      />
+      <span className="font-mono text-[10px] uppercase tracking-wide2" style={{ color: salon.accent }}>
+        {salon.sub}
+      </span>
+      <h3 className="mt-4 font-display text-3xl font-light text-linen">{salon.name}</h3>
+      <p className="mt-3 text-[13px] font-light leading-relaxed text-muted">{salon.note}</p>
+      <span
+        className="mt-6 inline-flex items-center gap-2 text-[11px] uppercase tracking-wide2 transition-colors duration-300"
+        style={{ color: active ? salon.accent : '#7A746B' }}
+      >
+        {active ? 'Seçildi' : 'Bu salonu seç'} <span>→</span>
+      </span>
+    </button>
+  )
+}
+
+function TableMap({ accent, selectedTable, onSelect }) {
+  const tables = useMemo(
+    () =>
+      Array.from({ length: 14 }, (_, i) => ({
+        id: i + 1,
+        seats: [2, 2, 4, 4, 6, 2][i % 6],
+        occupied: [3, 5, 6, 9, 11, 13].includes(i + 1),
+      })),
+    [],
+  )
+  return (
+    <div className="grid grid-cols-4 gap-4 sm:grid-cols-7">
+      {tables.map((tb) => {
+        const sel = selectedTable?.id === tb.id
+        return (
+          <button
+            key={tb.id}
+            disabled={tb.occupied}
+            onClick={() => onSelect(tb)}
+            aria-label={`Masa ${tb.id}, ${tb.seats} kişilik${tb.occupied ? ', dolu' : ''}`}
+            className="group relative flex aspect-square flex-col items-center justify-center rounded-full border transition-all duration-[400ms] disabled:cursor-not-allowed"
+            style={{
+              borderColor: sel ? accent : tb.occupied ? '#1C1915' : '#272320',
+              background: sel ? accent : 'transparent',
+              opacity: tb.occupied ? 0.35 : 1,
+            }}
+          >
+            <span
+              className="font-mono text-[13px]"
+              style={{ color: sel ? '#0A0908' : tb.occupied ? '#7A746B' : '#F4EFE6' }}
+            >
+              {String(tb.id).padStart(2, '0')}
+            </span>
+            <span
+              className="font-mono text-[9px]"
+              style={{ color: sel ? '#0A0908' : '#7A746B' }}
+            >
+              {tb.occupied ? 'dolu' : `${tb.seats}p`}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function VirtualTable({ accent, dim }) {
+  return (
+    <div className="relative flex h-40 items-center justify-center overflow-hidden rounded-2xl border border-ash-800 bg-ash-850">
+      <div
+        className="absolute inset-0 transition-opacity duration-700"
+        style={{ background: '#000', opacity: dim }}
+      />
+      <motion.div
+        className="relative h-24 w-24 rounded-full"
+        style={{
+          background: 'radial-gradient(circle at 50% 38%, #2a2622 0%, #15130F 70%)',
+          boxShadow: `0 0 60px 6px ${accent}, inset 0 2px 8px rgba(0,0,0,0.6)`,
+        }}
+        animate={{ boxShadow: `0 0 ${70 - dim * 60}px 6px ${accent}` }}
+        transition={{ duration: 0.7 }}
+      >
+        <div className="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-ash-700" />
+      </motion.div>
+      <span className="absolute bottom-3 left-4 font-mono text-[10px] uppercase tracking-hair text-muted">
+        Sanal Masa · Önizleme
+      </span>
+    </div>
+  )
+}
+
+function TableAccordion({ accent, lighting, setLighting, service, setService }) {
+  const Row = ({ items, value, onChange, render }) => (
+    <div className="flex flex-wrap gap-2">
+      {items.map((it) => {
+        const on = value === it.id
+        return (
+          <button
+            key={it.id}
+            onClick={() => onChange(it.id)}
+            className="rounded-full border px-4 py-2 text-left transition-all duration-300"
+            style={{
+              borderColor: on ? accent : '#272320',
+              background: on ? accent + '18' : 'transparent',
+            }}
+          >
+            {render(it, on)}
+          </button>
+        )
+      })}
+    </div>
+  )
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="overflow-hidden"
+    >
+      <div className="mt-6 grid gap-8 rounded-2xl border border-ash-800 bg-ash-900/40 p-6 lg:grid-cols-2">
+        <div className="space-y-6">
+          <div>
+            <p className="mb-3 font-mono text-[10px] uppercase tracking-wide2 text-muted">
+              Aydınlatma Seviyesi
+            </p>
+            <Row
+              items={LIGHTING}
+              value={lighting}
+              onChange={setLighting}
+              render={(it, on) => (
+                <span className="text-[12px]" style={{ color: on ? accent : '#F4EFE6' }}>
+                  {it.label}
+                </span>
+              )}
+            />
+          </div>
+          <div>
+            <p className="mb-3 font-mono text-[10px] uppercase tracking-wide2 text-muted">
+              Servis Tarzı
+            </p>
+            <Row
+              items={SERVICE}
+              value={service}
+              onChange={setService}
+              render={(it, on) => (
+                <span className="block">
+                  <span className="text-[12px]" style={{ color: on ? accent : '#F4EFE6' }}>
+                    {it.label}
+                  </span>
+                  <span className="block font-mono text-[9px] text-muted">{it.detail}</span>
+                </span>
+              )}
+            />
+          </div>
+        </div>
+        <VirtualTable accent={accent} dim={LIGHTING.find((l) => l.id === lighting)?.dim ?? 0.4} />
+      </div>
+    </motion.div>
+  )
+}
+
+function ExperienceCart({
+  accent,
+  salon,
+  table,
+  cart,
+  toggle,
+  base,
+  guests,
+  setGuests,
+  date,
+  setDate,
+  time,
+  setTime,
+  total,
+  onCheckout,
+}) {
+  const ready = salon && table && guests >= 1 && date && time
+  const cta = !salon
+    ? 'Önce bir salon seçin'
+    : !table
+    ? 'Bir masa seçin'
+    : !date || !time
+    ? 'Tarih ve saat seçin'
+    : 'Rezervasyonu Onayla'
+
+  return (
+    <div className="sticky top-6 rounded-2xl border border-ash-800 bg-ash-900/60 p-6 backdrop-blur-sm">
+      <p className="font-mono text-[10px] uppercase tracking-wide2 text-muted">Deneyim Sepeti</p>
+
+      <div className="mt-5 space-y-3 border-b border-ash-800 pb-5">
+        <div className="flex justify-between text-[12px]">
+          <span className="text-muted">Salon</span>
+          <span className="text-linen">{salon ? salon.name : '—'}</span>
+        </div>
+        <div className="flex justify-between text-[12px]">
+          <span className="text-muted">Masa</span>
+          <span className="text-linen">
+            {table ? `No. ${String(table.id).padStart(2, '0')} · ${table.seats}p` : '—'}
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-[12px]">
+          <span className="text-muted">Kişi</span>
+          <Stepper value={guests} onChange={setGuests} min={1} max={table?.seats ?? 12} accent={accent} />
+        </div>
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <input
+            type="date"
+            min={todayISO()}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="rounded-lg border border-ash-800 bg-ash-950/60 px-3 py-2 font-mono text-[11px] text-linen outline-none transition-colors duration-300 focus:border-champagne [color-scheme:dark]"
+            aria-label="Tarih"
+          />
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="rounded-lg border border-ash-800 bg-ash-950/60 px-3 py-2 font-mono text-[11px] text-linen outline-none transition-colors duration-300 focus:border-champagne [color-scheme:dark]"
+            aria-label="Saat"
+          />
+        </div>
+        <div className="flex justify-between text-[12px]">
+          <span className="text-muted">Set menü · ₺{fmt(base)} × {guests}</span>
+          <span className="text-linen">₺{fmt(base * guests)}</span>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-2">
+        {EXPERIENCES.map((e) => {
+          const on = cart.includes(e.id)
+          return (
+            <button
+              key={e.id}
+              onClick={() => toggle(e.id)}
+              className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all duration-300"
+              style={{ borderColor: on ? accent : '#1C1915', background: on ? accent + '12' : 'transparent' }}
+            >
+              <span>
+                <span className="block text-[12px]" style={{ color: on ? accent : '#F4EFE6' }}>
+                  {e.name}
+                </span>
+                <span className="block font-mono text-[9px] text-muted">{e.detail}</span>
+              </span>
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-[11px] text-linen/80">+₺{fmt(e.price)}</span>
+                <span
+                  className="flex h-5 w-5 items-center justify-center rounded-full border text-[11px]"
+                  style={{ borderColor: on ? accent : '#272320', color: on ? accent : '#7A746B' }}
+                >
+                  {on ? '−' : '+'}
+                </span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="mt-6 flex items-baseline justify-between border-t border-ash-800 pt-5">
+        <span className="font-mono text-[10px] uppercase tracking-wide2 text-muted">Tahmini Toplam</span>
+        <motion.span
+          key={total}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="font-display text-3xl font-light"
+          style={{ color: accent }}
+        >
+          ₺{fmt(total)}
+        </motion.span>
+      </div>
+
+      <button
+        disabled={!ready}
+        onClick={onCheckout}
+        className="group mt-6 w-full overflow-hidden rounded-full py-3.5 text-[12px] uppercase tracking-wide2 transition-all duration-[400ms] disabled:cursor-not-allowed disabled:opacity-30"
+        style={{ background: accent, color: '#0A0908' }}
+      >
+        {cta} {ready && <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>}
+      </button>
+    </div>
+  )
+}
+
+/* ── Live card preview ────────────────────────────────────────────────────── */
+function CardPreview({ number, name, expiry, accent, focusCvv }) {
+  const brand = cardBrand(number)
+  const groups = (formatCardNumber(number) || '').split(' ')
+  const slots = [0, 1, 2, 3].map((i) => groups[i] || '••••')
+  return (
+    <div
+      className="relative h-48 w-full overflow-hidden rounded-2xl border border-ash-700 p-6"
+      style={{
+        background: `linear-gradient(135deg, #1C1915 0%, #100E0B 60%, ${accent}22 140%)`,
+      }}
+    >
+      <div
+        className="absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl"
+        style={{ background: accent, opacity: 0.18 }}
+      />
+      <div className="flex items-start justify-between">
+        <span className="font-display text-lg tracking-hair text-linen">
+          AURA <span style={{ color: accent }}>&amp;</span> ASH
+        </span>
+        <span className="font-mono text-[11px] uppercase tracking-wide2 text-linen/70">{brand}</span>
+      </div>
+      <div
+        className="mt-5 h-7 w-10 rounded-md"
+        style={{ background: `linear-gradient(135deg, ${accent}, #8a6f3c)` }}
+      />
+      <div className="mt-4 flex gap-3 font-mono text-[15px] tracking-[0.18em] text-linen/90">
+        {slots.map((g, i) => (
+          <span key={i}>{g}</span>
+        ))}
+      </div>
+      <div className="mt-4 flex items-end justify-between">
+        <div>
+          <p className="font-mono text-[8px] uppercase tracking-hair text-muted">Kart Sahibi</p>
+          <p className="mt-0.5 text-[12px] uppercase tracking-hair text-linen/90">
+            {name || 'AD SOYAD'}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="font-mono text-[8px] uppercase tracking-hair text-muted">Geçerlilik</p>
+          <p className="mt-0.5 font-mono text-[12px] text-linen/90">{expiry || 'AA/YY'}</p>
+        </div>
+      </div>
+      <AnimatePresence>
+        {focusCvv && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center bg-ash-950/80 backdrop-blur-sm"
+          >
+            <span className="font-mono text-[11px] uppercase tracking-wide2 text-muted">
+              CVV kartın arkasında · 3 hane
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+/* ── Multi-step checkout: details → payment → confirmation ─────────────────── */
+const PAY_METHODS = [
+  { id: 'card', label: 'Kart ile Öde', detail: 'Kapora ön provizyon olarak alınır' },
+  { id: 'venue', label: 'Restoranda Öde', detail: 'Masada ödeme · kapora yok' },
+  { id: 'transfer', label: 'Havale / EFT', detail: 'IBAN e-posta ile gönderilir' },
+]
+const STEPS = ['Detaylar', 'Ödeme', 'Onay']
+
+function CheckoutFlow({ open, onClose, accent, booking }) {
+  const notify = useNotify()
+  const reduce = useReducedMotion()
+  const [step, setStep] = useState(0)
+  const [details, setDetails] = useState({ name: '', email: '', phone: '', notes: '' })
+  const [touched, setTouched] = useState({})
+  const [method, setMethod] = useState('card')
+  const [card, setCard] = useState({ number: '', name: '', expiry: '', cvv: '' })
+  const [cvvFocus, setCvvFocus] = useState(false)
+  const [code, setCode] = useState('')
+
+  useEffect(() => {
+    if (open) {
+      setStep(0)
+      setTouched({})
+      setCode('')
+    }
+  }, [open])
+
+  if (!open || !booking) return null
+  const deposit = Math.round(booking.total * 0.3)
+
+  const detailErrors = {
+    name: details.name.trim().length < 2 ? 'Adınızı girin' : '',
+    email: emailValid(details.email) ? '' : 'Geçerli bir e-posta girin',
+    phone: phoneValid(details.phone) ? '' : 'Geçerli bir telefon girin',
+  }
+  const cardErrors = {
+    number: luhnValid(card.number) ? '' : 'Kart numarasını kontrol edin',
+    name: card.name.trim().length < 2 ? 'Kart üzerindeki ismi girin' : '',
+    expiry: expiryValid(card.expiry) ? '' : 'AA/YY',
+    cvv: onlyDigits(card.cvv).length >= 3 ? '' : '3 hane',
+  }
+  const detailsOk = !detailErrors.name && !detailErrors.email && !detailErrors.phone
+  const paymentOk = method !== 'card' || Object.values(cardErrors).every((e) => !e)
+
+  const next = () => {
+    if (step === 0) {
+      setTouched({ name: 1, email: 1, phone: 1 })
+      if (!detailsOk) return
+      setStep(1)
+    } else if (step === 1) {
+      setTouched((t) => ({ ...t, cnumber: 1, cname: 1, cexpiry: 1, ccvv: 1 }))
+      if (!paymentOk) return
+      setCode(genCode())
+      setStep(2)
+      notify('Rezervasyon onaylandı', { tone: 'success' })
+    }
+  }
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-ash-950/80 p-4 backdrop-blur-md sm:items-center sm:p-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+      onClick={onClose}
+      role="dialog"
+      aria-label="Rezervasyon tamamlama"
+    >
+      <motion.div
+        className="relative w-full max-w-xl rounded-3xl border border-ash-800 bg-ash-900/95 p-7 backdrop-blur-xl sm:p-9"
+        initial={{ opacity: 0, y: 24, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.98 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          aria-label="Kapat"
+          className="absolute right-6 top-6 text-muted transition-colors hover:text-linen"
+        >
+          <span className="text-2xl leading-none">×</span>
+        </button>
+
+        {/* progress */}
+        <div className="flex items-center gap-2">
+          {STEPS.map((label, i) => (
+            <div key={label} className="flex flex-1 items-center gap-2">
+              <span
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-[10px] transition-colors duration-400"
+                style={{
+                  background: i <= step ? accent : 'transparent',
+                  color: i <= step ? '#0A0908' : '#7A746B',
+                  border: i <= step ? 'none' : '1px solid #272320',
+                }}
+              >
+                {i < step ? '✓' : i + 1}
+              </span>
+              <span
+                className="hidden text-[10px] uppercase tracking-hair transition-colors duration-400 sm:inline"
+                style={{ color: i <= step ? '#F4EFE6' : '#7A746B' }}
+              >
+                {label}
+              </span>
+              {i < STEPS.length - 1 && (
+                <span className="h-px flex-1" style={{ background: i < step ? accent : '#272320' }} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8">
+          <AnimatePresence mode="wait">
+            {/* STEP 0 — details */}
+            {step === 0 && (
+              <motion.div
+                key="s0"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.35 }}
+              >
+                <h3 className="font-display text-2xl font-light text-linen">Sizi tanıyalım.</h3>
+                <p className="mt-2 text-[13px] font-light text-muted">
+                  {booking.salon.name} · {prettyDate(booking.date)} · {booking.time} · {booking.guests} kişi
+                </p>
+                <div className="mt-6 space-y-4">
+                  <Field label="Ad Soyad" error={touched.name && detailErrors.name}>
+                    <input
+                      className={inputCls}
+                      placeholder="Adınız"
+                      value={details.name}
+                      onChange={(e) => setDetails((d) => ({ ...d, name: e.target.value }))}
+                      onBlur={() => setTouched((t) => ({ ...t, name: 1 }))}
+                    />
+                  </Field>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="E-posta" error={touched.email && detailErrors.email}>
+                      <input
+                        type="email"
+                        className={inputCls}
+                        placeholder="ad@eposta.com"
+                        value={details.email}
+                        onChange={(e) => setDetails((d) => ({ ...d, email: e.target.value }))}
+                        onBlur={() => setTouched((t) => ({ ...t, email: 1 }))}
+                      />
+                    </Field>
+                    <Field label="Telefon" error={touched.phone && detailErrors.phone}>
+                      <input
+                        type="tel"
+                        className={inputCls}
+                        placeholder="05XX XXX XX XX"
+                        value={details.phone}
+                        onChange={(e) => setDetails((d) => ({ ...d, phone: e.target.value }))}
+                        onBlur={() => setTouched((t) => ({ ...t, phone: 1 }))}
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Şefe not · alerji, kutlama, tercih">
+                    <textarea
+                      rows={3}
+                      className={inputCls + ' resize-none'}
+                      placeholder="Örn. fındık alerjisi var, yıldönümü kutluyoruz…"
+                      value={details.notes}
+                      onChange={(e) => setDetails((d) => ({ ...d, notes: e.target.value }))}
+                    />
+                  </Field>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 1 — payment */}
+            {step === 1 && (
+              <motion.div
+                key="s1"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.35 }}
+              >
+                <h3 className="font-display text-2xl font-light text-linen">Ödeme yöntemi.</h3>
+                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                  {PAY_METHODS.map((m) => {
+                    const on = method === m.id
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => setMethod(m.id)}
+                        className="rounded-xl border p-3 text-left transition-all duration-300"
+                        style={{ borderColor: on ? accent : '#272320', background: on ? accent + '12' : 'transparent' }}
+                      >
+                        <span className="block text-[12px]" style={{ color: on ? accent : '#F4EFE6' }}>
+                          {m.label}
+                        </span>
+                        <span className="mt-1 block font-mono text-[9px] leading-tight text-muted">
+                          {m.detail}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {method === 'card' ? (
+                    <motion.div
+                      key="card"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-6 space-y-5"
+                    >
+                      <CardPreview
+                        number={card.number}
+                        name={card.name}
+                        expiry={card.expiry}
+                        accent={accent}
+                        focusCvv={cvvFocus}
+                      />
+                      <Field label="Kart Numarası" error={touched.cnumber && cardErrors.number}>
+                        <input
+                          inputMode="numeric"
+                          className={inputCls + ' font-mono tracking-[0.12em]'}
+                          placeholder="0000 0000 0000 0000"
+                          value={formatCardNumber(card.number)}
+                          onChange={(e) => setCard((c) => ({ ...c, number: e.target.value }))}
+                          onBlur={() => setTouched((t) => ({ ...t, cnumber: 1 }))}
+                        />
+                      </Field>
+                      <Field label="Kart Üzerindeki İsim" error={touched.cname && cardErrors.name}>
+                        <input
+                          className={inputCls + ' uppercase'}
+                          placeholder="AD SOYAD"
+                          value={card.name}
+                          onChange={(e) => setCard((c) => ({ ...c, name: e.target.value }))}
+                          onBlur={() => setTouched((t) => ({ ...t, cname: 1 }))}
+                        />
+                      </Field>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field label="Geçerlilik" error={touched.cexpiry && cardErrors.expiry}>
+                          <input
+                            inputMode="numeric"
+                            className={inputCls + ' font-mono'}
+                            placeholder="AA/YY"
+                            value={formatExpiry(card.expiry)}
+                            onChange={(e) => setCard((c) => ({ ...c, expiry: e.target.value }))}
+                            onBlur={() => setTouched((t) => ({ ...t, cexpiry: 1 }))}
+                          />
+                        </Field>
+                        <Field label="CVV" error={touched.ccvv && cardErrors.cvv}>
+                          <input
+                            inputMode="numeric"
+                            type="password"
+                            maxLength={4}
+                            className={inputCls + ' font-mono'}
+                            placeholder="•••"
+                            value={card.cvv}
+                            onFocus={() => setCvvFocus(true)}
+                            onChange={(e) => setCard((c) => ({ ...c, cvv: onlyDigits(e.target.value) }))}
+                            onBlur={() => {
+                              setCvvFocus(false)
+                              setTouched((t) => ({ ...t, ccvv: 1 }))
+                            }}
+                          />
+                        </Field>
+                      </div>
+                      <p className="font-mono text-[10px] leading-relaxed text-muted">
+                        Kapora olarak <span style={{ color: accent }}>₺{fmt(deposit)}</span> ön provizyon
+                        alınır; kalan tutar restoranda tahsil edilir. 256-bit şifreli.
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="alt"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-6 rounded-2xl border border-ash-800 bg-ash-850/50 p-6"
+                    >
+                      <p className="text-[13px] font-light leading-relaxed text-linen/80">
+                        {method === 'venue'
+                          ? 'Kapora alınmaz. Rezervasyonunuz teyit edilir; ödemeyi masanızda yaparsınız. Gelmeme durumunda kişi başı ₺250 iptal ücreti uygulanır.'
+                          : 'Onay sonrası IBAN bilgileri e-postanıza gönderilir. Havaleniz 24 saat içinde ulaşmazsa rezervasyon serbest bırakılır.'}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+
+            {/* STEP 2 — confirmation */}
+            {step === 2 && (
+              <motion.div
+                key="s2"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                className="text-center"
+              >
+                <motion.div
+                  className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+                  style={{ border: `1px solid ${accent}` }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1, type: reduce ? 'tween' : 'spring', stiffness: 200, damping: 14 }}
+                >
+                  <motion.span
+                    className="text-2xl"
+                    style={{ color: accent }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.35 }}
+                  >
+                    ✓
+                  </motion.span>
+                </motion.div>
+                <h3 className="mt-6 font-display text-3xl font-light text-linen">Masanız hazır.</h3>
+                <p className="mt-2 text-[13px] font-light text-muted">
+                  Onay ve detaylar {details.email} adresine gönderildi.
+                </p>
+
+                <div className="mt-7 rounded-2xl border border-ash-800 bg-ash-950/40 p-5 text-left">
+                  <div className="flex items-center justify-between border-b border-ash-800 pb-4">
+                    <span className="font-mono text-[10px] uppercase tracking-wide2 text-muted">
+                      Rezervasyon Kodu
+                    </span>
+                    <span className="font-mono text-base tracking-[0.2em]" style={{ color: accent }}>
+                      {code}
+                    </span>
+                  </div>
+                  <dl className="mt-4 space-y-2.5 text-[12px]">
+                    <Line k="Misafir" v={details.name} />
+                    <Line k="Salon" v={booking.salon.name} />
+                    <Line k="Masa" v={`No. ${String(booking.table.id).padStart(2, '0')}`} />
+                    <Line k="Tarih" v={`${prettyDate(booking.date)} · ${booking.time}`} />
+                    <Line k="Kişi" v={`${booking.guests} kişi`} />
+                    {booking.cart.length > 0 && (
+                      <Line
+                        k="Deneyimler"
+                        v={booking.cart
+                          .map((id) => EXPERIENCES.find((e) => e.id === id)?.name)
+                          .filter(Boolean)
+                          .join(', ')}
+                      />
+                    )}
+                    <Line
+                      k="Ödeme"
+                      v={PAY_METHODS.find((m) => m.id === method)?.label || ''}
+                    />
+                  </dl>
+                  <div className="mt-4 flex items-baseline justify-between border-t border-ash-800 pt-4">
+                    <span className="font-mono text-[10px] uppercase tracking-wide2 text-muted">
+                      Toplam
+                    </span>
+                    <span className="font-display text-2xl font-light" style={{ color: accent }}>
+                      ₺{fmt(booking.total)}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* footer actions */}
+        <div className="mt-8 flex items-center justify-between">
+          {step < 2 ? (
+            <>
+              <button
+                onClick={() => (step === 0 ? onClose() : setStep(step - 1))}
+                className="text-[11px] uppercase tracking-wide2 text-muted transition-colors hover:text-linen"
+              >
+                {step === 0 ? 'Vazgeç' : '← Geri'}
+              </button>
+              <button
+                onClick={next}
+                className="rounded-full px-8 py-3 text-[12px] uppercase tracking-wide2 transition-transform duration-300 hover:scale-[1.02]"
+                style={{ background: accent, color: '#0A0908' }}
+              >
+                {step === 0 ? 'Ödemeye Geç' : method === 'card' ? `₺${fmt(deposit)} Öde & Onayla` : 'Rezervasyonu Onayla'}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onClose}
+              className="mx-auto rounded-full border px-10 py-3 text-[12px] uppercase tracking-wide2 text-linen transition-colors duration-300 hover:bg-linen hover:text-ash-950"
+              style={{ borderColor: accent }}
+            >
+              Bitti
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+function Line({ k, v }) {
+  return (
+    <div className="flex justify-between gap-4">
+      <dt className="shrink-0 text-muted">{k}</dt>
+      <dd className="text-right text-linen">{v || '—'}</dd>
+    </div>
+  )
+}
+
+function ReservationSection({ accent, salon, setSalon }) {
+  const notify = useNotify()
+  const [table, setTable] = useState(null)
+  const [lighting, setLighting] = useState('low')
+  const [service, setService] = useState('story')
+  const [cart, setCart] = useState([])
+  const [guests, setGuests] = useState(2)
+  const [date, setDate] = useState('')
+  const [time, setTime] = useState('20:00')
+  const [checkout, setCheckout] = useState(false)
+  const base = 2400
+
+  const total = base * guests + cart.reduce((s, id) => s + (EXPERIENCES.find((e) => e.id === id)?.price || 0), 0)
+
+  const toggle = useCallback(
+    (id) =>
+      setCart((c) => {
+        const has = c.includes(id)
+        const exp = EXPERIENCES.find((e) => e.id === id)
+        if (exp) notify(has ? `${exp.name} çıkarıldı` : `${exp.name} sepete eklendi`)
+        return has ? c.filter((x) => x !== id) : [...c, id]
+      }),
+    [notify],
+  )
+
+  // keep guest count within the chosen table's capacity
+  useEffect(() => {
+    if (table && guests > table.seats) setGuests(table.seats)
+  }, [table, guests])
+
+  return (
+    <section className="px-6 pb-32 pt-28 sm:px-12 lg:px-20">
+      <Eyebrow index="03" accent={accent}>
+        Rezervasyon · Atmosfer Seçimi
+      </Eyebrow>
+      <h2
+        className="mt-8 max-w-2xl font-display font-light leading-[0.95] text-linen"
+        style={{ fontSize: 'clamp(2.4rem, 6vw, 4.5rem)' }}
+      >
+        Önce bir dünya seçin.
+      </h2>
+      <p className="mt-6 max-w-md text-[14px] font-light text-muted">
+        Seçtiğiniz salon, tüm arayüzün ışığını sessizce kendine çeker. Üç farklı ruh, üç farklı ateş.
+      </p>
+
+      <div className="mt-14 grid gap-5 lg:grid-cols-3">
+        {SALONS.map((s) => (
+          <SalonCard key={s.id} salon={s} active={salon?.id === s.id} onSelect={setSalon} />
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {salon && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-16 grid gap-10 lg:grid-cols-[1.6fr,1fr]"
+          >
+            <div>
+              <p className="mb-6 font-mono text-[11px] uppercase tracking-wide2 text-muted">
+                {salon.name} · Masa Düzeni
+              </p>
+              <TableMap accent={accent} selectedTable={table} onSelect={setTable} />
+
+              <AnimatePresence>
+                {table && (
+                  <TableAccordion
+                    accent={accent}
+                    lighting={lighting}
+                    setLighting={setLighting}
+                    service={service}
+                    setService={setService}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+
+            <ExperienceCart
+              accent={accent}
+              salon={salon}
+              table={table}
+              cart={cart}
+              toggle={toggle}
+              base={base}
+              guests={guests}
+              setGuests={setGuests}
+              date={date}
+              setDate={setDate}
+              time={time}
+              setTime={setTime}
+              total={total}
+              onCheckout={() => setCheckout(true)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {checkout && (
+          <CheckoutFlow
+            open={checkout}
+            onClose={() => setCheckout(false)}
+            accent={accent}
+            booking={{ salon, table, guests, date, time, cart, base, total }}
+          />
+        )}
+      </AnimatePresence>
+    </section>
+  )
+}
+
+/* ── 4 · KITCHEN LIVE — the cyber cockpit ─────────────────────────────────── */
+function KitchenLive({ open, onClose, accent }) {
+  const reduce = useReducedMotion()
+  const [temp, setTemp] = useState(412)
+  const [plates, setPlates] = useState(1284)
+  const [rate, setRate] = useState(2.1)
+
+  useEffect(() => {
+    if (!open) return
+    const id = setInterval(() => {
+      setTemp((v) => Math.min(520, Math.max(360, v + Math.round(Math.random() * 14 - 7))))
+      setPlates((v) => v + (Math.random() > 0.5 ? 1 : 0))
+      setRate((v) => Math.max(0.6, Math.min(4.2, +(v + (Math.random() * 0.6 - 0.3)).toFixed(1))))
+    }, 1800)
+    return () => clearInterval(id)
+  }, [open])
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 30, scale: 0.96 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed bottom-5 right-5 z-40 w-[290px] overflow-hidden rounded-2xl border border-ash-800 bg-ash-900/95 backdrop-blur-xl"
+        >
+          <div className="flex items-center justify-between border-b border-ash-800 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <motion.span
+                className="h-1.5 w-1.5 rounded-full bg-red-500"
+                animate={reduce ? {} : { opacity: [1, 0.2, 1] }}
+                transition={{ duration: 1.6, repeat: Infinity }}
+              />
+              <span className="font-mono text-[10px] uppercase tracking-wide2 text-linen">
+                Kitchen · Live
+              </span>
+            </div>
+            <button onClick={onClose} aria-label="Canlı mutfağı kapat" className="text-muted hover:text-linen">
+              <span className="text-lg leading-none">×</span>
+            </button>
+          </div>
+
+          {/* simulated feed */}
+          <div className="relative h-32 overflow-hidden bg-ash-950">
+            <motion.div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'repeating-linear-gradient(0deg, rgba(201,168,106,0.06) 0px, rgba(201,168,106,0.06) 1px, transparent 1px, transparent 4px)',
+              }}
+              animate={reduce ? {} : { backgroundPositionY: ['0px', '8px'] }}
+              transition={{ duration: 0.6, repeat: Infinity, ease: 'linear' }}
+            />
+            <div
+              className="absolute inset-0 opacity-50"
+              style={{ background: `radial-gradient(circle at 60% 40%, ${accent}22, transparent 60%)` }}
+            />
+            <motion.div
+              className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl"
+              style={{ background: accent }}
+              animate={reduce ? {} : { scale: [1, 1.25, 1], opacity: [0.4, 0.7, 0.4] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <span className="absolute bottom-2 left-3 font-mono text-[9px] uppercase tracking-wide2 text-muted">
+              Pass · Kamera 02
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 divide-x divide-ash-800 border-t border-ash-800">
+            <Metric label="Fırın °C" value={temp} accent={accent} />
+            <Metric label="Tabak/dk" value={rate} accent={accent} />
+            <Metric label="Bu akşam" value={fmt(plates)} accent={accent} />
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+function Metric({ label, value, accent }) {
+  return (
+    <div className="px-3 py-4 text-center">
+      <motion.p
+        key={String(value)}
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="font-mono text-base"
+        style={{ color: accent }}
+      >
+        {value}
+      </motion.p>
+      <p className="mt-1 font-mono text-[8px] uppercase tracking-hair text-muted">{label}</p>
+    </div>
+  )
+}
+
+/* ── Secret cellar — the easter egg ───────────────────────────────────────── */
+function SecretCellar({ open, onClose }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-[60] overflow-y-auto"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.1, ease: 'easeInOut' }}
+          style={{ background: 'radial-gradient(120% 100% at 50% 0%, #120d09 0%, #050403 100%)' }}
+        >
+          <div className="mx-auto max-w-5xl px-6 py-24 sm:px-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 1 }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="h-px w-10" style={{ background: '#7a5a2e' }} />
+                <span className="font-mono text-[11px] uppercase tracking-wide3 text-[#9c7b45]">
+                  Erişim · Onaylandı
+                </span>
+              </div>
+              <h2
+                className="mt-8 font-display font-light italic leading-none text-[#e8d8b8]"
+                style={{ fontSize: 'clamp(3rem, 9vw, 7rem)' }}
+              >
+                The Secret Cellar
+              </h2>
+              <p className="mt-6 max-w-md text-[14px] font-light leading-relaxed text-[#9c7b45]">
+                Listede olmayan şişeler. Sadece soranlar için saklanan bir mahzen. Her biri tek,
+                her biri sessiz.
+              </p>
+
+              <div className="mt-16 grid gap-5 sm:grid-cols-2">
+                {CELLAR.map((w, i) => (
+                  <motion.div
+                    key={w.name}
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 + i * 0.12, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                    className="group relative overflow-hidden rounded-2xl border border-[#3a2e1c] bg-[#0e0a06]/70 p-7"
+                  >
+                    <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[#7a5a2e] opacity-0 blur-3xl transition-opacity duration-700 group-hover:opacity-20" />
+                    <div className="flex items-baseline justify-between">
+                      <span className="font-display text-2xl font-light text-[#e8d8b8]">{w.name}</span>
+                      <span className="font-mono text-sm text-[#9c7b45]">{w.year}</span>
+                    </div>
+                    <p className="mt-2 font-mono text-[10px] uppercase tracking-wide2 text-[#6e5836]">
+                      {w.region}
+                    </p>
+                    <p className="mt-5 text-[13px] font-light italic text-[#b89a63]">{w.note}</p>
+                    <p className="mt-5 font-display text-xl text-[#e8d8b8]">₺{fmt(w.price)}</p>
+                  </motion.div>
+                ))}
+              </div>
+
+              <button
+                onClick={onClose}
+                className="mt-16 text-[12px] uppercase tracking-wide2 text-[#9c7b45] underline-offset-8 transition-colors hover:text-[#e8d8b8] hover:underline"
+              >
+                ← Işığa geri dön
+              </button>
+            </motion.div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+/* ── Footer with the hidden trigger ───────────────────────────────────────── */
+function Footer({ accent, onSecret }) {
+  const [taps, setTaps] = useState(0)
+  const handle = () => {
+    const next = taps + 1
+    setTaps(next)
+    if (next >= 3) {
+      setTaps(0)
+      onSecret()
+    }
+  }
+  return (
+    <footer className="border-t border-ash-800 px-6 py-10 sm:px-12 lg:px-20">
+      <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+        <div className="font-display text-2xl font-light tracking-hair text-linen">
+          AURA <span style={{ color: accent }}>&amp;</span> ASH
+        </div>
+        <div className="flex flex-wrap gap-x-8 gap-y-2 font-mono text-[10px] uppercase tracking-wide2 text-muted">
+          <span>Karaköy · İstanbul</span>
+          <span>18:00 — 01:00</span>
+          <span>+90 212 000 00 00</span>
+        </div>
+      </div>
+      <div className="mt-8 font-mono text-[10px] tracking-hair text-ash-700">
+        © 2026 AURA &amp; ASH. Modern odun ateşiyle pişirilmiş bir{' '}
+        <button
+          onClick={handle}
+          className="cursor-default text-ash-700 transition-colors duration-300 hover:text-ash-700"
+          aria-label="—"
+        >
+          mahzen
+        </button>{' '}
+        deneyimi. Tüm hakları saklıdır.
+      </div>
+    </footer>
+  )
+}
+
+/* ── App — orchestration & shared state ───────────────────────────────────── */
+export default function App() {
+  const [view, setView] = useState('discover')
+  const [drawerDish, setDrawerDish] = useState(null)
+  const [salon, setSalon] = useState(null)
+  const [kitchenOpen, setKitchenOpen] = useState(false)
+  const [cellarOpen, setCellarOpen] = useState(false)
+
+  const accent = salon?.accent ?? CHAMPAGNE
+  const glow = salon?.glow ?? 'rgba(201,168,106,0.12)'
+
+  const handleNav = useCallback((id) => {
+    if (id === 'live') {
+      setKitchenOpen((o) => !o)
+      return
+    }
+    setView(id)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
+  // Escape closes whatever is on top
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return
+      if (cellarOpen) return setCellarOpen(false)
+      if (drawerDish) return setDrawerDish(null)
+      if (kitchenOpen) return setKitchenOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [cellarOpen, drawerDish, kitchenOpen])
+
+  const views = {
+    discover: <Hero onNav={handleNav} accent={accent} />,
+    menu: <MenuSection accent={accent} onOpenDrawer={setDrawerDish} />,
+    reserve: <ReservationSection accent={accent} salon={salon} setSalon={setSalon} />,
+  }
+
+  return (
+    <NotificationProvider accent={accent}>
+    <div className="relative min-h-screen overflow-x-hidden bg-ash-950 font-sans text-linen">
+      <AmbientField accent={accent} glow={glow} />
+      <PulseIndicator accent={accent} />
+      <VerticalNav active={kitchenOpen ? 'live' : view} onNav={handleNav} accent={accent} />
+
+      <main className="relative z-10 ml-16 sm:ml-20">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={view}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {views[view]}
+          </motion.div>
+        </AnimatePresence>
+
+        <Footer accent={accent} onSecret={() => setCellarOpen(true)} />
+      </main>
+
+      <AnimatePresence>
+        {drawerDish && (
+          <SensoryDrawer dish={drawerDish} accent={accent} onClose={() => setDrawerDish(null)} />
+        )}
+      </AnimatePresence>
+
+      <KitchenLive open={kitchenOpen} onClose={() => setKitchenOpen(false)} accent={accent} />
+      <SecretCellar open={cellarOpen} onClose={() => setCellarOpen(false)} />
+    </div>
+    </NotificationProvider>
+  )
+}

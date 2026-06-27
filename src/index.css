@@ -1,0 +1,53 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  margin: 0;
+  background: #0a0908;
+}
+
+body {
+  font-family: 'Jost', system-ui, sans-serif;
+}
+
+/* A whisper-thin, brand-tinted scrollbar — keeps the canvas calm. */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0908;
+}
+::-webkit-scrollbar-thumb {
+  background: #272320;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a342d;
+}
+
+/* Keyboard focus is part of the luxury — never strip it, only refine it. */
+:focus-visible {
+  outline: 1px solid #c9a86a;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: rgba(201, 168, 106, 0.25);
+  color: #f4efe6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

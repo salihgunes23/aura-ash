@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AURA &amp; ASH — Sensory Gastronomy</title>
+    <meta
+      name="description"
+      content="AURA & ASH — Duyusal Gastronomi & Modern Odun Ateşi. Sessiz lüksün dijital sahnesi."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&family=Jost:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ['Fraunces', 'Georgia', 'serif'],
+              sans: ['Jost', 'system-ui', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+            },
+            colors: {
+              ash: {
+                950: '#0A0908',
+                900: '#100E0B',
+                850: '#15130F',
+                800: '#1C1915',
+                700: '#272320',
+              },
+              linen: '#F4EFE6',
+              champagne: '#C9A86A',
+              muted: '#7A746B',
+            },
+            letterSpacing: {
+              hair: '0.02em',
+              wide2: '0.28em',
+              wide3: '0.42em',
+            },
+          },
+        },
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
